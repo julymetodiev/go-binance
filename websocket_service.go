@@ -361,6 +361,38 @@ type WsMarketStatEvent struct {
 	Count              int64  `json:"n"`
 }
 
+//J. ==================
+
+type WsIndividualMarketsStatHandler func(event WsIndividualStatEvent)
+
+func WsIndividualMarketsStatServe(symbol string, handler WsIndividualMarketsStatHandler, errHandler ErrHandler) (doneC, stopC chan struct{}, err error) {
+	endpoint := fmt.Sprintf("%s/%s@bookTicker", baseFutureURL, strings.ToLower(symbol))
+	cfg := newWsConfig(endpoint)
+	wsHandler := func(message []byte) {
+		var event WsIndividualStatEvent
+		err := json.Unmarshal(message, &event)
+		if err != nil {
+			errHandler(err)
+			return
+		}
+		handler(event)
+	}
+	return wsServe(cfg, wsHandler, errHandler)
+}
+
+type WsAllIndividualMarketsStatEvent []*WsIndividualStatEvent
+
+type WsIndividualStatEvent struct {
+	UpdateId     int64  `json:"u"`
+	Symbol       string `json:"s"`
+	BestBidPrice string `json:"b"`
+	BestBidQty   string `json:"B"`
+	BestAskPrice string `json:"a"`
+	BestAskQty   string `json:"A"`
+}
+
+//J. ==================
+
 // WsAllMiniMarketsStatServeHandler handle websocket that push all mini-ticker market statistics for 24hr
 type WsAllMiniMarketsStatServeHandler func(event WsAllMiniMarketsStatEvent)
 
